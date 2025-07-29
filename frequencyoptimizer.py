@@ -29,10 +29,10 @@ rc('axes',**{'labelsize':18,'titlesize':18})
 
 
 def nolog(x,pos):
-    return r"$\hfill %0.1f$" % (10**x)
+    return r"$\hfill {:0.1f}$".format(10**x)
 noformatter = FuncFormatter(nolog)
 def nolog2(x,pos):
-    return r"$\hfill %0.2f$" % (10**x)
+    return r"$\hfill {:0.2f}$".format(10**x)
 noformatter2 = FuncFormatter(nolog2)
 
 def log(x,pos):
@@ -47,7 +47,7 @@ def log(x,pos):
         return r"$\hfill 0.1$"
     elif y == -2:
         return r"$\hfill 0.01$"
-    return r"$\hfill 10^{%i}$" % x#np.log10(x) 
+    return r"$\hfill 10^{{}}$".format(x)#np.log10(x) 
 
 formatter = FuncFormatter(log)
 
@@ -65,7 +65,7 @@ def log100(x,pos):
         return r"$\hfill 0.1$"
     elif y == -2:
         return r"$\hfill 0.01$"
-    return r"$\hfill 10^{%i}$" % x#np.log10(x) 
+    return r"$\hfill 10^{{}}$".format(x)#np.log10(x) 
 
 formatter100 = FuncFormatter(log100)
 
@@ -662,10 +662,10 @@ class FrequencyOptimizer:
         S = self.psrnoise.Uscale*numer/denom # numer/denom is the mean S/N over all phase. Need to adjust by the factor Uscale.
 
         
-        #print numer,denom
+        #print(numer,denom)
 
-        #print nus,B
-        #print self.psrnoise.I_0,self.telnoise.gain,B,self.telnoise.get_T(nus)#np.power(nus/nuref,-1*self.psrnoise.alpha)
+        #print(nus,B)
+        #print(self.psrnoise.I_0,self.telnoise.gain,B,self.telnoise.get_T(nus)#np.power(nus/nuref,-1*self.psrnoise.alpha))
         
         sigmas = self.template_fitting_error(S,Weffs,1)
 
@@ -790,10 +790,10 @@ class FrequencyOptimizer:
         #DM_nu_var = evalDMnuError(self.psrnoise.dnud,np.max(nus),np.min(nus))**2 / 25.0
         DM_nu_cov = self.build_DMnu_cov_matrix(nus)
         DM_nu_var = epoch_averaged_error(DM_nu_cov,var=True)
-        #print nus
+        #print(nus)
         # FOO
-        #print DM_nu_cov
-        #print DM_nu_var
+        #print(DM_nu_cov)
+        #print(DM_nu_var)
         if DM_nu_var < 0.0:# or np.isnan(DM_nu_var): #no longer needed
             DM_nu_var = 0 
 
@@ -811,11 +811,13 @@ class FrequencyOptimizer:
         retval = np.sqrt(template_fitting_var + DM_nu_var + scattering_var)
         
         if self.vverbose:
-            print("DM misestimation noise: %0.3f us"%retval)
+            print("DM misestimation noise: {:0.3f} us".format(retval))
             
-            print("   DM estimation error: %0.3f us"%np.sqrt(template_fitting_var))
-            print("   DM(nu) error: %0.3f us"%np.sqrt(DM_nu_var))
-            print("   Chromatic term error: %0.3f us"%np.sqrt(scattering_var))
+            print("   DM estimation error: "
+                  "{:0.3f} us".format(np.sqrt(template_fitting_var)))
+            print("   DM(nu) error: {:0.3f} us".format(np.sqrt(DM_nu_var)))
+            print("   Chromatic term error: "
+                  "{:0.3f} us".format(np.sqrt(scattering_var)))
 
 
         return retval
@@ -871,16 +873,16 @@ class FrequencyOptimizer:
         if self.vverbose:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                print("White noise: %0.3f us"%np.sqrt(sigma2))
-                print("   Template-fitting error: %0.3f us"%np.sqrt(epoch_averaged_error(sncov,var=True)))
+                print("White noise: {:0.3f} us".format(np.sqrt(sigma2)))
+                print("   Template-fitting error: {:0.3f} us".format(np.sqrt(epoch_averaged_error(sncov, var=True))))
                 if np.all(jittercov == jittercov[0,0]):
-                    print("   Jitter error: %0.3f us"%np.sqrt(jittercov[0,0]))
+                    print("   Jitter error: {:0.3f} us".format(np.sqrt(jittercov[0,0])))
                 else:
-                    print("   Jitter error: %0.3f us"%np.sqrt(epoch_averaged_error(jittercov,var=True)))
+                    print("   Jitter error: {:0.3f} us".format(np.sqrt(epoch_averaged_error(jittercov, var=True))))
                 if np.all(disscov == disscov[0,0]):
-                    print("   Scintillation error: %0.3f us"%np.sqrt(disscov[0,0]))
+                    print("   Scintillation error: {:0.3f} us".format(np.sqrt(disscov[0,0])))
                 else:
-                    print("   Scintillation error: %0.3f us"%np.sqrt(round(epoch_averaged_error(disscov,var=True),6)))
+                    print("   Scintillation error: {:0.3f} us".format(np.sqrt(round(epoch_averaged_error(disscov,var=True),6))))
 
 
         
@@ -894,11 +896,11 @@ class FrequencyOptimizer:
         sigma = np.sqrt(sigmadm2 + sigmatel2) #need to include PBF errors?
 
         if self.vverbose:
-            print("Telescope noise: %0.3f us"%np.sqrt(sigmatel2))
+            print("Telescope noise: {:0.3f} us".format(np.sqrt(sigmatel2)))
 
 
         if self.vverbose:
-            print("Total noise: %0.3f us"%sigma)
+            print("Total noise: {:0.3f} us".format(sigma))
             print("")
 
         if self.psrnoise.P is not None and sigma > self.psrnoise.P:
@@ -913,16 +915,16 @@ class FrequencyOptimizer:
         '''
         Run a full calculation over a grid of frequencies
         '''
-        print("Computing for pulsar: %s"%self.psrnoise.name)
+        print("Computing for pulsar: {}".format(self.psrnoise.name))
         self.sigmas = np.zeros((len(self.Cs),len(self.Bs)))
         if self.frac_bw == False:
             def loop_func(ic):
                 C = self.Cs[ic]
                 sigmas = np.zeros(len(self.Bs))
                 if self.verbose:
-                    print("Computing center freq %0.3f GHz (%i/%i)"%(C,ic,len(self.Cs)))
+                    print("Computing center freq {:0.3f} GHz ({}/{})".format(C,ic,len(self.Cs)))
                 for ib,B in enumerate(self.Bs):
-                    #print C,B
+                    #print(C,B)
                     #if B > 1.9*C:
                     #if B > 2*C*(self.r - 1)/(self.r + 1):
                     if (self.r is not None and (C+0.5*B)/(C-0.5*B) > self.r)\
@@ -938,7 +940,7 @@ class FrequencyOptimizer:
                             nus = np.logspace(np.log10(nulow),np.log10(nuhigh),self.nchan+1)[:-1] #more uniform sampling?
                         sigmas[ib] = self.calc_single(nus)[0]
                         #self.sigmas[ic,ib] = self.calc_single(nus)[0]
-                        #print self.sigmas[ic,ib]
+                        #print(self.sigmas[ic,ib])
                 return sigmas
 
         else:
@@ -970,7 +972,7 @@ class FrequencyOptimizer:
                 self.sigmas[ic,:] = loop_func(ic)
         else: #should set export OPENBLAS_NUM_THREADS=1
             if self.verbose:
-                print("Attempting multiprocessing, nprocs=%s"%str(self.ncpu))
+                print("Attempting multiprocessing, nprocs={}".format(str(self.ncpu)))
             self.sigmas[:,:] = parallel.parmap(loop_func,list(range(len(self.Cs))),nprocs=self.ncpu)
 
 
@@ -1018,7 +1020,7 @@ class FrequencyOptimizer:
                 ax.xaxis.set_major_formatter(noformatter)
                 ax.yaxis.set_major_formatter(noformatter)
 
-                ax.text(0.05,0.9,"PSR~%s"%self.psrnoise.name.replace("-","$-$"),fontsize=18,transform=ax.transAxes,bbox=dict(boxstyle="square",fc="white"))
+                ax.text(0.05,0.9,"PSR~{}".format(self.psrnoise.name.replace("-","$-$")),fontsize=18,transform=ax.transAxes,bbox=dict(boxstyle="square",fc="white"))
 
             if minimum is not None:
                 checkdata = np.log10(self.sigmas)
@@ -1033,7 +1035,7 @@ class FrequencyOptimizer:
                 cax = ax.contour(data,extent=np.log10(np.array([self.Cs[0],self.Cs[-1],self.Bs[0],self.Bs[-1]])),colors=['b','b'],levels=[np.log10(1.1*(10**MIN)),np.log10(1.5*(10**MIN))],linewidths=[1,1],linestyles=['--','--'],origin='lower')
                 print("Minimum",MINC,MINB,MIN)
                 with open("minima.txt",'a') as FILE:
-                    FILE.write("%s minima %f %f %f\n"%(self.psrnoise.name,MINC,MINB,MIN))
+                    FILE.write("{} minima {} {} {}\n".format(self.psrnoise.name,MINC,MINB,MIN))
                 if self.log:
                     ax.plot(np.log10(MINC),np.log10(MINB),minimum,zorder=50,ms=10)
                 else:
@@ -1056,7 +1058,7 @@ class FrequencyOptimizer:
                         nus = np.linspace(nulow,nuhigh,self.nchan+1)[:-1] #more uniform sampling?
                         sigma = np.log10(self.calc_single(nus)[0])
                     with open("minima.txt",'a') as FILE:
-                        FILE.write("%s point %f %f %f\n"%(self.psrnoise.name,x,y,sigma))
+                        FILE.write("{} point {} {} {}\n".format(self.psrnoise.name,x,y,sigma))
 
 
 
