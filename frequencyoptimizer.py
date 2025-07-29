@@ -296,7 +296,8 @@ class PulsarNoise:
                           ampratios_file)
         
         required_columns = ['errratios', 'Weffratios', 'ratios', 'ampratios']
-        if not all([k in self.ampratios_data.keys() for k in required_columns]):
+        if not all([k in list(self.ampratios_data.keys())
+                    for k in required_columns]):
             raise ValueError("NpzFile 'ampratios_file' must contain "
                              "keys {}.".format(required_columns))
         
@@ -970,7 +971,7 @@ class FrequencyOptimizer:
         else: #should set export OPENBLAS_NUM_THREADS=1
             if self.verbose:
                 print("Attempting multiprocessing, nprocs=%s"%str(self.ncpu))
-            self.sigmas[:,:] = parallel.parmap(loop_func,range(len(self.Cs)),nprocs=self.ncpu)
+            self.sigmas[:,:] = parallel.parmap(loop_func,list(range(len(self.Cs))),nprocs=self.ncpu)
 
 
     def plot(self,filename="triplot.png",doshow=True,figsize=(8,6),save=True,minimum=None,points=None,colorbararrow=None,cmap=cm.inferno_r,**kwargs):
