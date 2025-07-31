@@ -109,14 +109,14 @@ RXFILE_HEADER_FMT = "#Freq  Trx  G  Eps  t_int(optional)"
 def epoch_averaged_error(C,var=False):
     # Stripped down version from rednoisemodel.py from the excess noise project
     N = len(C)
-    UT = np.matrix(np.ones(N))
+    UT = np.ones((1, N))
     U = UT.T
     try:
-        CI = C.I
+        CI = np.linalg.inv(C)
     except np.linalg.LinAlgError:
         print("Warning: singular matrix, using pseudoinverse")
         CI = np.linalg.pinv(C)
-    C_E = np.dot(np.dot(UT,CI),U).I
+    C_E = np.linalg.inv(np.dot(np.dot(UT,CI),U))
     if var:
         return C_E[0,0]
     return np.sqrt(C_E[0,0])
@@ -691,7 +691,7 @@ class FrequencyOptimizer:
                 inds = np.where(np.logical_and(nus>=maskmin,nus<=maskmax))[0]
                 sigmas[inds] = 0.0 #???
         
-        return np.matrix(np.diag(sigmas**2))
+        return np.diag(sigmas**2)
 
     def build_jitter_cov_matrix(self, nus):
         '''
@@ -700,7 +700,7 @@ class FrequencyOptimizer:
         sigma_Js = self.psrnoise.sigma_Js
         if type(sigma_Js) != np.ndarray:
             sigma_Js = np.zeros(len(nus), dtype=nus.dtype) + sigma_Js
-        retval = np.matrix(np.outer(sigma_Js, sigma_Js))
+        retval = np.outer(sigma_Js, sigma_Js)
 
         return retval
 
@@ -750,7 +750,7 @@ class FrequencyOptimizer:
         # check if niss >> 1?
         sigmas = taud/np.sqrt(niss)
 
-        retval = np.matrix(np.diag(sigmas**2))
+        retval = np.diag(sigmas**2)
 
         inds = np.where(niss < 2)[0]
         for i in inds:
@@ -769,18 +769,18 @@ class FrequencyOptimizer:
         Return sum of DM mis-estimation errors
         '''
         N = len(nus)
-        X = np.matrix(np.ones((N,2))) #design matrix
+        X = np.ones((N,2)) #design matrix
         for i,nu in enumerate(nus):
             X[i,1] = K/nu**2
 
         # Template-Fitting Errors
         if covmat is False:
-            V = np.matrix(np.diag(errs**2)) #weights matrix
+            V = np.diag(errs**2) #weights matrix
         else:
             V = errs
         XT = X.T
-        VI = V.I
-        P = np.dot(np.dot(XT,VI),X).I 
+        VI = np.linalg.inv(V)
+        P = np.linalg.inv(np.dot(np.dot(XT,VI),X))
 
 
 
@@ -805,7 +805,8 @@ class FrequencyOptimizer:
         # PBF errors (scattering), included already in cov matrix?
         # Scattering error, assume this is proportional to nu^-4.4? or 4?
         chromatic_components = self.psrnoise.tauvar * np.power(nus,-4.4)
-        scattering_var = np.dot(np.dot(np.dot(P,XT),VI),chromatic_components)[0,0]**2
+        scattering_covmat = np.dot(np.dot(np.dot(P,XT),VI),chromatic_components)
+        scattering_var = scattering_covmat[0]**2
 
 
 
@@ -832,7 +833,7 @@ class FrequencyOptimizer:
         '''
         dnud = DISS.scale_dnu_d(self.psrnoise.dnud,nuref,nus)
         sigma = evalDMnuError(dnud,nus,g=g,q=q,screen=screen,fresnel=fresnel)
-        return np.asmatrix(sigma**2)
+        return sigma**2
 
     def build_polarization_cov_matrix(self,nus):
         '''
@@ -854,7 +855,7 @@ class FrequencyOptimizer:
         epsilon = self.telnoise.get_epsilon(nus)
         sigmas = epsilon*pi_V*(W50s/100.0) #W50s in microseconds #do more?
         sigmasprime = 2 * np.sqrt(eta) * pi_L #Actually use this
-        return np.matrix(np.diag(sigmas**2))
+        return np.diag(sigmas**2)
 
 
     def calc_single(self,nus,retall=False):
@@ -940,7 +941,11 @@ class FrequencyOptimizer:
                             nus = np.linspace(nulow,nuhigh,self.nchan+1)[:-1] #more uniform sampling?
                         else:
                             nus = np.logspace(np.log10(nulow),np.log10(nuhigh),self.nchan+1)[:-1] #more uniform sampling?
-                        sigmas[ib] = self.calc_single(nus)[0]
+                        try:
+                            sigmas[ib] = self.calc_single(nus)[0]
+                        except TypeError as e:
+                            print(self.calc_single(nus))
+                            raise e
                         #self.sigmas[ic,ib] = self.calc_single(nus)[0]
                         #print(self.sigmas[ic,ib])
                 return sigmas
