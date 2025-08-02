@@ -1,5 +1,5 @@
-import unittest2
-from mock import patch, mock_open
+import unittest
+from unittest.mock import patch, mock_open
 import numpy as np
 import frequencyoptimizer as fop
 from frequencyoptimizer import TelescopeNoise
@@ -8,7 +8,7 @@ from frequencyoptimizer import TelescopeNoise
 Unittests for reading and writing files
 """
 
-class Test_get_rxspecs_missing_value(unittest2.TestCase):
+class Test_get_rxspecs_missing_value(unittest.TestCase):
     """
     Parameterized tests for whether an RcvrFileParseError is raised
     when a column is missing a value
@@ -35,11 +35,11 @@ class Test_get_rxspecs_missing_value(unittest2.TestCase):
                 m = mock_open(read_data=f)
                 m.return_value.__iter__ = lambda self: iter(self.readline, '')
                 with patch("frequencyoptimizer.open", m):
-                    with self.assertRaisesRegexp(fop.RcvrFileParseError,
+                    with self.assertRaisesRegex(fop.RcvrFileParseError,
                                                  ".*must have 4 or 5.*"):
                         self.scope_noise.get_rxspecs(0.)
 
-class Test_get_rxspecs_blank_line(unittest2.TestCase):
+class Test_get_rxspecs_blank_line(unittest.TestCase):
     """
     Parameterized tests that get_rxspecs skips blank line in file without
     halting execution
@@ -68,7 +68,7 @@ class Test_get_rxspecs_blank_line(unittest2.TestCase):
                                                self.correct_answer)
 
                 
-class Test_get_rxspecs_t_int_is_array(unittest2.TestCase):
+class Test_get_rxspecs_t_int_is_array(unittest.TestCase):
     """
     Test whether a TypeError is raised when receiver specs file is specified
     and tint_in is an array
@@ -89,7 +89,7 @@ class Test_get_rxspecs_t_int_is_array(unittest2.TestCase):
             with self.assertRaises(TypeError):
                 self.scope_noise.get_rxspecs(self.tint_in)
                 
-class Test_get_rxspecs_invalid_header(unittest2.TestCase):
+class Test_get_rxspecs_invalid_header(unittest.TestCase):
     """
     Parameterized tests whether an RcvrFileParseError is raised when
     file does not contain or contains an invalid header
@@ -117,9 +117,9 @@ class Test_get_rxspecs_invalid_header(unittest2.TestCase):
                 m = mock_open(read_data=f)
                 m.return_value.__iter__ = lambda self: iter(self.readline, '')
                 with patch("frequencyoptimizer.open", m):
-                    with self.assertRaisesRegexp(fop.RcvrFileParseError,
+                    with self.assertRaisesRegex(fop.RcvrFileParseError,
                                                  ".*missing.*header.*"):
                         self.scope_noise.get_rxspecs(0.)    
         
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()
