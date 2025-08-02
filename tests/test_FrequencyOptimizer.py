@@ -3,6 +3,7 @@ Integration tests for frequencyoptimizer.FrequencyOptimizer
 """
 
 import pytest
+import multiprocessing as mpc
 import numpy as np
 import frequencyoptimizer as fop
 
@@ -79,9 +80,12 @@ PSR_PARAMS = {'J1713+0747AO': {'alpha': 1.2,
                              'P': 4.62164152493627,
                              'Uscale': 10.22}}
 
-
 @pytest.mark.parametrize("vverbose", [True, False])
 def test_FrequencyOptimizer_calc_single_vverbose(vverbose):
+    """
+    Test frequencyoptimizer.FrequencyOptimizer.calc_single with
+    and without printing all noise components to stdout
+    """
     nus = np.array([0.72370136, 0.73018196, 0.73672059, 0.74331777,
                     0.74997403, 0.75668989, 0.7634659, 0.77030258,
                     0.77720048, 0.78416015, 0.79118215, 0.79826702,
@@ -118,6 +122,10 @@ def test_FrequencyOptimizer_calc_single_vverbose(vverbose):
 
 @pytest.mark.parametrize("vverbose", [True, False])
 def test_FrequencyOptimizer_calc_vverbose(vverbose):
+    """
+    Test frequencyoptimizer.FrequencyOptimizer.calc_single with
+    and without printing all noise components to stdout
+    """
     nchan = 20
     galnoise = fop.GalacticNoise()
     telnoise = fop.TelescopeNoise(gain=2.0, T_rx=30.)
@@ -130,9 +138,9 @@ def test_FrequencyOptimizer_calc_vverbose(vverbose):
                                D=0.41,
                                tauvar=12.2e-3,
                                dtd=1272.2,
-                               Weffs=np.zeros(nchan)+511.0,
-                               W50s=np.zeros(nchan)+136.8,
-                               sigma_Js=np.zeros(nchan)+0.066,
+                               Weffs=np.full(nchan, 511.0),
+                               W50s=np.full(nchan, 136.80),
+                               sigma_Js=np.full(nchan, 0.066),
                                P=4.074545941439190,
                                Uscale=27.01)
 
@@ -150,7 +158,7 @@ def test_FrequencyOptimizer_calc_vverbose(vverbose):
 @pytest.mark.parametrize("psr", list(PSR_PARAMS))
 def test_FrequencyOptimizer_calc_pulsarparams(psr):
     """
-    Test optimization for pulsars in Michael's pub
+    Test optimization for different pulsars from Michael's paper
     """
     nchan = 20
     galnoise = fop.GalacticNoise()
@@ -183,4 +191,40 @@ def test_FrequencyOptimizer_calc_pulsarparams(psr):
                                      vverbose=False)
     freqopt.calc()
 
+@pytest.mark.parametrize("ncpus", np.arange(mpc.cpu_count() - 2) + 1)
+def test_FrequencyOptimizer_calc_ncpus(ncpus):
+    """
+    Integration test for parallel.py with
+    frequencyoptimizer.FrequencyOptimizer.calc. No multiprocessing 
+    used when ncpus=1
+    """
+    nchan = 20
+    galnoise = fop.GalacticNoise()
+    telnoise = fop.TelescopeNoise(gain=2.0, T_rx=30.)
+
+    psrnoise = fop.PulsarNoise("J1744-1134",
+                               alpha=1.49,
+                               taud=26.1e-3,
+                               I_0=4.888,
+                               DM=3.14,
+                               D=0.41,
+                               tauvar=12.2e-3,
+                               dtd=1272.2,
+                               Weffs=np.full(nchan, 511.0),
+                               W50s=np.full(nchan, 136.8),
+                               sigma_Js=np.full(nchan, 0.066),
+                               P=4.074545941439190,
+                               Uscale=27.01)
+
+    freqopt = fop.FrequencyOptimizer(psrnoise,
+                                     galnoise,
+                                     telnoise,
+                                     numin=0.1,
+                                     numax=10.0,
+                                     nchan=nchan,
+                                     ncpu=ncpus,
+                                     log=True,
+                                     vverbose=False)
+
+    freqopt.calc()
 
