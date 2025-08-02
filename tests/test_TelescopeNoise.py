@@ -1,8 +1,8 @@
 import unittest
+from unittest.mock import patch, mock_open
 import warnings
 import tempfile
 from os import path
-from mock import patch, mock_open
 import numpy as np
 import parameterized as ptzd
 import frequencyoptimizer as fop
