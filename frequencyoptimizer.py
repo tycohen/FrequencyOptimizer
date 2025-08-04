@@ -47,7 +47,7 @@ def log(x,pos):
         return r"$\hfill 0.1$"
     elif y == -2:
         return r"$\hfill 0.01$"
-    return r"$\hfill 10^{{}}$".format(x)#np.log10(x) 
+    return r"$\hfill 10^{{{:d}}}$".format(int(x))#np.log10(x) 
 
 formatter = FuncFormatter(log)
 
@@ -65,7 +65,7 @@ def log100(x,pos):
         return r"$\hfill 0.1$"
     elif y == -2:
         return r"$\hfill 0.01$"
-    return r"$\hfill 10^{{}}$".format(x)#np.log10(x) 
+    return r"$\hfill 10^{{{:d}}}$".format(int(x))#np.log10(x) 
 
 formatter100 = FuncFormatter(log100)
 
