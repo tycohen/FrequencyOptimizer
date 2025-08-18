@@ -331,10 +331,10 @@ class TelescopeNoise:
     '''
     Container class for all Telescope-related variables.
 
-    gain : float or numpy.ndarray
+    gain : int, float or numpy.ndarray
            Telescope gain (K/Jy) 
            If array must be same length as rx_nu 
-    T_rx : float or numpy.ndarray
+    T_rx : int, float or numpy.ndarray
            Receiver temperature (K) (i.e. T_sys - T_gal - T_CMB)
            If array must be same length as rx_nu 
     epsilon : float or numpy.ndarray (optional)
@@ -365,9 +365,11 @@ class TelescopeNoise:
                  T=1800.0, Npol=2, rx_nu=None,
                  rxspecfile=None, rxspecdir=None):
 
-        if not isinstance(gain, (float, np.ndarray)):
-            raise TypeError("Invalid 'gain' type {}. Valid types are float "
+        if not isinstance(gain, (float, int, np.ndarray)):
+            raise TypeError("Invalid 'gain' type {}. Valid types are float, int, "
                             "or numpy.ndarray.".format(type(gain)))
+        if isinstance(gain, int):
+            gain = float(gain)
         if isinstance(gain, np.ndarray):
             try:
                 if len(gain) != len(rx_nu):
@@ -376,9 +378,11 @@ class TelescopeNoise:
             except TypeError:
                 raise TypeError("if 'gain' is type numpy.ndarray, "
                                 "rx_nus must also be numpy.ndarray of same length")
-        if not isinstance(T_rx, (float, np.ndarray)):
-            raise TypeError("Invalid 'T_rx' type {}. Valid types are float "
+        if not isinstance(T_rx, (float, int, np.ndarray)):
+            raise TypeError("Invalid 'T_rx' type {}. Valid types are float, int, "
                             "or numpy.ndarray.".format(type(T_rx)))
+        if isinstance(T_rx, int):
+            T_rx = float(T_rx)
         if isinstance(T_rx, np.ndarray):
             try:
                 if len(T_rx) != len(rx_nu):
@@ -939,7 +943,7 @@ class FrequencyOptimizer:
                     #if B > 2*C*(self.r - 1)/(self.r + 1):
                     if (self.r is not None and (C+0.5*B)/(C-0.5*B) > self.r)\
                         or B > 1.9*C or C - B/2.0 < self.numin:
-                        self.sigmas[ic,ib] =np.nan
+                        sigmas[ib] = np.nan
                     else:
                         nulow = C - B/2.0
                         nuhigh = C + B/2.0
@@ -953,7 +957,6 @@ class FrequencyOptimizer:
                         except TypeError as e:
                             print(self.calc_single(nus))
                             raise e
-                        #self.sigmas[ic,ib] = self.calc_single(nus)[0]
                         #print(self.sigmas[ic,ib])
                 return sigmas
 
@@ -966,7 +969,7 @@ class FrequencyOptimizer:
                 for indf,F in enumerate(self.Fs):
                     B = C*F
                     if B > 1.9*C or B <= 0:
-                        self.sigmas[ic,indf] = np.nan
+                        sigmas[indf] = np.nan
                     else:
                         nulow = C - B/2.0
                         nuhigh = C + B/2.0
@@ -977,7 +980,6 @@ class FrequencyOptimizer:
                         else:
                             nus = np.logspace(np.log10(nulow),np.log10(nuhigh),self.nchan+1)[:-1] #more uniform sampling?   
 
-                        #self.sigmas[ic,indf] = self.calc_single(nus)[0]
                         sigmas[indf] = self.calc_single(nus)[0]
                 return sigmas
 
@@ -1172,3 +1174,4 @@ class FrequencyOptimizer:
         MINC = self.Cs[INDC]
 
         return MINC,MINB
+ 
