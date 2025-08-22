@@ -552,7 +552,7 @@ class FrequencyOptimizer:
     telnoise: Telescope Noise object
     numin: Lowest frequency to run (GHz)
     numax: Highest frequency to run (GHz)
-    nsteps: Number of steps in the grid to run when log=True
+    nsteps:  Number of steps per power-10 in the log-spaced grid to run when log=True
     dnu: Grid spacing when log=False
     nchan: number of underlying frequency channels
     log: Run in log space
@@ -591,7 +591,7 @@ class FrequencyOptimizer:
             if self.log == False:
                 self.dnu = dnu
                 self.Cs = np.arange(numin,numax,dnu)
-                self.Bs = np.arange(numin,numax/2,dnu)
+                self.Bs = np.arange(numin,numax,dnu)
             else:
                 MIN = np.log10(numin)
                 MAX = np.log10(numax)
