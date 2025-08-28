@@ -1,12 +1,13 @@
 """
-Integration tests for frequencyoptimizer.FrequencyOptimizer
+Integration and unit tests for frequencyoptimizer.FrequencyOptimizer
 """
-
+import unittest
 import pytest
 import multiprocessing as mpc
 import numpy as np
 import frequencyoptimizer as fop
 from matplotlib import cm
+import parameterized as ptzd
 
 PSR_PARAMS = {'J1713+0747AO': {'alpha': 1.2,
                                'taud': 0.0521,
@@ -278,6 +279,10 @@ def test_FrequencyOptimizer_calc_ncpus(ncpus):
 
     freqopt.calc()
 
+def gt(a, b, rtol=1e-15, atol=1e-15 ):
+    return (a > b) & (~np.isclose(a, b, rtol=rtol, atol=atol))
+def lt(a, b, rtol=1e-15, atol=1e-15):
+    return (a < b) & (~np.isclose(a, b, rtol=rtol, atol=atol))
 @pytest.mark.parametrize(("log", "dnu", "full_bw", "r"),
                          [(True, None, False, None),
                           (False, 0.05, False, None),
@@ -322,28 +327,63 @@ def test_FrequencyOptimizer_calc_NaN_conditions(log, dnu, full_bw, r):
     freqopt.calc()
 
     # correct NaN location mask
-    if log == False:
-       dnu = dnu
-       Cs = np.arange(freqopt.numin, freqopt.numax, dnu)
-       Bs = np.arange(freqopt.numin, freqopt.numax / 2, dnu)
-    else:
-       MIN = np.log10(freqopt.numin)
-       MAX = np.log10(freqopt.numax)
-       Cs = np.logspace(MIN, MAX, int((MAX - MIN) * nsteps + 1))
-       if full_bw:
-           MAX = np.log10(2 * numax)
-           Bs = np.logspace(MIN, MAX, int((MAX - MIN) * nsteps + 1))
-       else:
-           Bs = np.logspace(MIN, MAX, int((MAX - MIN) * nsteps + 1))
-
-    C, B = np.meshgrid(Cs, Bs)
-    cond1 = B > 1.9 * C
-    cond2 = (C - B / 2.0) < freqopt.numin # nearly redundant to cond1
+    C, B = np.meshgrid(freqopt.Cs, freqopt.Bs, indexing='ij')
+    cond1 = gt(B, 1.9*C, rtol=1e-15, atol=1e-15)
+    cond2 = lt(C - 0.5*B, freqopt.numin, rtol=1e-15, atol=1e-15)
     if r is not None:
-        cond3 = (C + 0.5 * B) / (C - 0.5 * B) > r
+        ratio = (C + 0.5*B)/(C - 0.5*B)
+        cond3 = gt(ratio, r, rtol=1e-15, atol=1e-15)
     else:
-        cond3 = np.full((len(Bs), len(Cs)), False)
-        
+        cond3 = np.full((len(freqopt.Bs), len(freqopt.Cs)), False)
     NaN_location = cond1 | cond2 | cond3
-    
-    np.testing.assert_equal(NaN_location, np.isnan(freqopt.sigmas).T)
+
+    np.testing.assert_equal(NaN_location, np.isnan(freqopt.sigmas))
+
+class Test_FrequencyOptimizer__is_forbidden_CB(unittest.TestCase):
+    """
+    Test(s) to check whether FrequencyOptimizer._is_forbidden_CB returns
+    expected results for a given center-frequency, bandwidth pair
+    """
+
+    #first element of each parameter tuple must be unique
+    @ptzd.parameterized.expand([(1.3, 1.35,
+                                 0.7000000000000001,
+                                 1.99999999999999961,
+                                 None, True)])
+    def test__is_forbidden_CB_returns_False_when_floating_point_error(self,
+                                                                bw,
+                                                                ctrfreq,
+                                                                numin,
+                                                                numax,
+                                                                r,
+                                                                enforce_numax):
+        """
+        A center-frequency, bandwidth combo should not be forbidden if floating
+        point rounding error puts the pair out of bounds
+        """
+        nchan = 20
+        galnoise = fop.GalacticNoise()
+        telnoise = fop.TelescopeNoise(gain=2.0, T_rx=30.)
+        psrnoise = fop.PulsarNoise("J1744-1134",
+                                   alpha=1.49,
+                                   taud=26.1e-3,
+                                   I_0=4.888,
+                                   DM=3.14,
+                                   D=0.41,
+                                   tauvar=12.2e-3,
+                                   dtd=1272.2,
+                                   Weffs=np.full(nchan, 511.0),
+                                   W50s=np.full(nchan, 136.8),
+                                   sigma_Js=np.full(nchan, 0.066),
+                                   P=4.074545941439190,
+                                   Uscale=27.01)
+        freqopt = fop.FrequencyOptimizer(psrnoise,
+                                         galnoise,
+                                         telnoise,
+                                         numin=numin,
+                                         numax=numax,
+                                         nchan=nchan,
+                                         r=r,
+                                         enforce_numax=enforce_numax,
+                                         verbose=False)
+        self.assertFalse(freqopt._is_forbidden_CB(ctrfreq, bw))

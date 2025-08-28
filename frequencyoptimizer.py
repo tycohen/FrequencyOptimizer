@@ -77,13 +77,11 @@ def uimshow(x,ax=None,origin='lower',interpolation='nearest',aspect='auto',**kwa
         im=imshow(x,origin=origin,interpolation=interpolation,aspect=aspect,**kwargs) # plt.
     return im
 
+def _lt_tol(a, b, rtol=1e-15, atol=1e-15):
+    return (a < b) and not np.isclose(a, b, rtol=rtol, atol=atol)
 
-
-
-
-
-
-
+def _gt_tol(a, b, rtol=1e-15, atol=1e-15):
+    return (a > b) and not np.isclose(a, b, rtol=rtol, atol=atol)
 
 #K = 4.149 #ms GHz^2 pc^-1 cm^3
 K = 4.149e3 #us GHz^2 pc^-1 cm^3  
@@ -922,15 +920,20 @@ class FrequencyOptimizer:
         return sigma, np.sqrt(sigma2), np.sqrt(sigmadm2), np.sqrt(sigmatel2),\
             np.sqrt(sigmasn2)
 
-    def _is_forbidden_CB(self, C, B):
+    def _is_forbidden_CB(self, C, B, rtol=1e-15, atol=1e-15):
         """
-        Return True if center frequency-BW combo is not allowed
+        Return True if center frequency-BW combo is not allowed, 
+        with tolerant boundaries.
         """
-        bwratio_cond = self.r is not None and (C+0.5*B)/(C-0.5*B) > self.r
-        maxB_cond = B > 1.9*C
-        numin_cond = C - B/2.0 < self.numin
+        bwratio_cond = self.r is not None and _gt_tol((C+0.5*B)/(C-0.5*B), self.r,
+                                                      rtol=rtol, atol=atol)
+        maxB_cond = _gt_tol(B, 1.9*C,
+                            rtol=rtol, atol=atol)
+        numin_cond = _lt_tol(C - B/2.0, self.numin,
+                             rtol=rtol, atol=atol)
         if self.enforce_numax:
-            numax_cond = C + B/2.0 > self.numax
+            numax_cond = _gt_tol(C + B/2.0, self.numax,
+                                 rtol=rtol, atol=atol)
         else:
             numax_cond = False
         return bwratio_cond or maxB_cond or numin_cond or numax_cond
