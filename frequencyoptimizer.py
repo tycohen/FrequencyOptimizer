@@ -981,7 +981,7 @@ class FrequencyOptimizer:
             def loop_func(ic):
                 C = self.Cs[ic]
                 sigmas = np.zeros(len(self.Fs))
-                if verbose:
+                if self.verbose:
                     print(ic,len(self.Cs),C)
                 for indf,F in enumerate(self.Fs):
                     B = C*F
@@ -1066,7 +1066,8 @@ class FrequencyOptimizer:
                 MINB = self.Bs[INDB]
                 MINC = self.Cs[INDC]
                 cax = ax.contour(data,extent=np.log10(np.array([self.Cs[0],self.Cs[-1],self.Bs[0],self.Bs[-1]])),colors=['b','b'],levels=[np.log10(1.1*(10**MIN)),np.log10(1.5*(10**MIN))],linewidths=[1,1],linestyles=['--','--'],origin='lower')
-                print("Minimum",MINC,MINB,MIN)
+                if self.verbose:
+                    print("Minimum",MINC,MINB,MIN)
                 with open("minima.txt",'a') as FILE:
                     FILE.write("{} minima {} {} {}\n".format(self.psrnoise.name,MINC,MINB,MIN))
                 if self.log:
