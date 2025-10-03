@@ -1,12 +1,13 @@
 """
 Consistency tests for frequencyoptimizer.py from python 2.7 to 3.9
 """
-
+from os import path
 import pytest
 import numpy as np
 import frequencyoptimizer as fop
 
-J1744_DATA = np.load("J1744-1134_dict_py27.dict.npy",
+J1744_DATA = np.load(path.join(path.dirname(__file__),
+                               "J1744-1134_dict_py27.dict.npy"),
                      allow_pickle=True,
                      encoding="latin1")
 J1744_DICT = J1744_DATA.item()

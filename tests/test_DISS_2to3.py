@@ -1,13 +1,15 @@
 """
 Consistency tests for DISS.py from python 2.7 to 3.9
 """
-
+from os import path
 import pytest
 import numpy as np
 import DISS
 
-PY2_DISS_DATA = np.load("py27_DISS_output.npz")
-J1744_DATA = np.load("J1744-1134_dict_py27.dict.npy",
+PY2_DISS_DATA = np.load(path.join(path.dirname(__file__),
+                                     "py27_DISS_output.npz"))
+J1744_DATA = np.load(path.join(path.dirname(__file__),
+                                  "J1744-1134_dict_py27.dict.npy"),
                      allow_pickle=True,
                      encoding="latin1")
 J1744_DICT = J1744_DATA.item()
