@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, mock_open
 import warnings
 import tempfile
+import os
 from os import path
 import numpy as np
 import parameterized as ptzd
@@ -295,22 +296,23 @@ class Test_TelescopeNoise__init__rxspecfile_precedence(unittest.TestCase):
     def setUp(self):
         self.file_content = ("#freq	Trx	G	eps\n"
                              "1000.	10.	1.	0.01\n")
-        self.basename = "test.txt"
-        self.workingdir_rxspecfile = tempfile.NamedTemporaryFile(prefix=self.basename,
-                                                                 dir=".")
-        self.rxspecs_rxspecfile = tempfile.NamedTemporaryFile(prefix=self.basename,
-                                                                 dir=path.join(fop.__dir__,
-                                                                               'rxspecs'))
-
+        thisdir = path.dirname(__file__)
+        self.workingdir_rxspecfile = tempfile.NamedTemporaryFile(suffix=".txt",
+                                                                 dir=thisdir)
+        self.rxspecs_rxspecfile = tempfile.NamedTemporaryFile()
+        self.rxspecs_rxspecfile.name = path.join(fop.__dir__,
+                                    'rxspecs',
+                                    path.basename(self.workingdir_rxspecfile.name))
+        
     def test_rxspecfile_in_working_dir_takes_precedence_over_default_dir(self):
         m = mock_open(read_data=self.file_content)
         m.return_value.__iter__ = lambda self: iter(self.readline, '')
         with patch("frequencyoptimizer.open", m):
             scope_noise = TelescopeNoise(1.,
                                          1.,
-                                         rxspecfile=self.basename)
+                                         rxspecfile=self.workingdir_rxspecfile.name)
             self.assertEqual(scope_noise.rxspecfile,
-                             path.abspath(path.join(".", self.basename)))
-
+                             path.abspath(self.workingdir_rxspecfile.name))
+        
 if __name__ == '__main__':
     unittest.main()
